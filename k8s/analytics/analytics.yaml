@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: analytics-service
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: analytics-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-service
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+spec:
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      containers:
+        - image: medinsight/analytics-service:latest
+          name: analytics-service
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+            - name: MONGODB_URI
+              value: mongodb://admin:password@mongodb:27017/medinsight_analytics?authSource=admin
+            - name: OLLAMA_BASE_URL
+              value: http://ollama:11434
+            - name: KEYCLOAK_URL
+              value: http://keycloak:8080
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi

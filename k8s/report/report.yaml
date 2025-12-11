@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: report-service
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: report-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: report-service
+  template:
+    metadata:
+      labels:
+        app: report-service
+    spec:
+      containers:
+        - image: medinsight/report-service:latest
+          name: report-service
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+            - name: DB_URL
+              value: jdbc:postgresql://postgres:5432/medinsight_db
+            - name: KEYCLOAK_URL
+              value: http://keycloak:8080
+          ports:
+            - containerPort: 8080

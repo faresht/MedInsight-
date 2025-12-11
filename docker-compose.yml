@@ -1,0 +1,292 @@
+version: '3.8'
+
+services:
+  # Databases
+  postgres:
+    image: postgres:15
+    container_name: medinsight-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: medinsight_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medinsight-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:6.0
+    container_name: medinsight-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - medinsight-net
+
+  redis:
+    image: redis:alpine
+    container_name: medinsight-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - medinsight-net
+
+  # Identity Provider
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: medinsight-keycloak
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/medinsight_db
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: password
+      KC_DB_SCHEMA: public
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medinsight-net
+
+  # AI Engine
+  ollama:
+    image: ollama/ollama:latest
+    container_name: medinsight-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - medinsight-net
+    # Note: GPU support requires nvidia-container-toolkit installed on host
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Event Bus
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: medinsight-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - medinsight-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: medinsight-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - medinsight-net
+
+  # Observability
+  # ELK Stack (Simplified with just Elastic + Kibana + Logstash for brevity, or just Zipkin/Jaeger for tracing)
+  # Using Zipkin for distributed tracing as per Spring Boot 3 standards for simplicity in setup
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: medinsight-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - medinsight-net
+  
+  # For logs, we instructed ELK.
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: medinsight-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - medinsight-net
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.10
+    container_name: medinsight-logstash
+    volumes:
+      - ./config/logstash/pipeline:/usr/share/logstash/pipeline  # User needs to create this pipeline config
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    depends_on:
+      - elasticsearch
+    networks:
+      - medinsight-net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: medinsight-kibana
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - medinsight-net
+
+  # Metrics
+  prometheus:
+    image: prom/prometheus
+    container_name: medinsight-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - medinsight-net
+
+  grafana:
+    image: grafana/grafana
+    container_name: medinsight-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - medinsight-net
+
+  # Microservices
+  gateway:
+    build: ./gateway
+    container_name: medinsight-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - KEYCLOAK_URL=http://keycloak:8080
+    depends_on:
+      - keycloak
+      - redis
+    networks:
+      - medinsight-net
+
+  auth-service:
+    build: ./auth-service
+    container_name: medinsight-auth-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - KEYCLOAK_URL=http://keycloak:8080
+    depends_on:
+      - keycloak
+      - postgres
+    networks:
+      - medinsight-net
+
+  patient-service:
+    build: ./patient-service
+    container_name: medinsight-patient-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/medinsight_db
+    depends_on:
+      - postgres
+      - keycloak
+    networks:
+      - medinsight-net
+
+  doctor-service:
+    build: ./doctor-service
+    container_name: medinsight-doctor-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/medinsight_db
+    depends_on:
+      - postgres
+      - keycloak
+    networks:
+      - medinsight-net
+
+  report-service:
+    build: ./report-service
+    container_name: medinsight-report-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/medinsight_db
+    depends_on:
+      - postgres
+      - keycloak
+    networks:
+      - medinsight-net
+
+  analytics-service:
+    build: ./analytics-service
+    container_name: medinsight-analytics-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/medinsight_analytics?authSource=admin
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - mongodb
+      - ollama
+      - keycloak
+    networks:
+      - medinsight-net
+
+  audit-service:
+    build: ./audit-service
+    container_name: medinsight-audit-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/medinsight_audit?authSource=admin
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - mongodb
+      - elasticsearch
+      - kafka
+      - keycloak
+    networks:
+      - medinsight-net
+
+  notification-service:
+    build: ./notification-service
+    container_name: medinsight-notification-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - kafka
+      - keycloak
+    networks:
+      - medinsight-net
+
+networks:
+  medinsight-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
+  ollama_models:
+  es_data:

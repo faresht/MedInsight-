@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: analytics-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/medinsight_analytics}
+  ai:
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      model: ${OLLAMA_MODEL:gwen:2.5}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm/protocol/openid-connect/certs
+
+logging:
+  level:
+    com.medinsight.analytics: DEBUG

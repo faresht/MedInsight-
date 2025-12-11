@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'medinsight-services'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080'] # Gateway
+      # In a real docker network, we'd use service names, but for Spring Boot running on host or container, adjustment needed.
+      # Assuming services run in docker for full stack, we'd add 'gateway:8080', 'patient-service:8081', etc.

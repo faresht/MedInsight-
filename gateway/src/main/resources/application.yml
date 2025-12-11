@@ -1,0 +1,56 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  main:
+    web-application-type: reactive
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm/protocol/openid-connect/certs
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://auth-service:8080}
+          predicates:
+            - Path=/api/auth/**
+        - id: patient-service
+          uri: ${PATIENT_SERVICE_URL:http://patient-service:8080}
+          predicates:
+            - Path=/api/patients/**
+        - id: doctor-service
+          uri: ${DOCTOR_SERVICE_URL:http://doctor-service:8080}
+          predicates:
+            - Path=/api/doctors/**
+        - id: report-service
+          uri: ${REPORT_SERVICE_URL:http://report-service:8080}
+          predicates:
+            - Path=/api/reports/**
+        - id: analytics-service
+          uri: ${ANALYTICS_SERVICE_URL:http://analytics-service:8080}
+          predicates:
+            - Path=/api/analytics/**
+        - id: audit-service
+          uri: ${AUDIT_SERVICE_URL:http://audit-service:8080}
+          predicates:
+            - Path=/api/audit/**
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8080}
+          predicates:
+            - Path=/api/notifications/**
+
+keycloak:
+  url: ${KEYCLOAK_URL:http://localhost:8080}
+  realm: medinsight-realm
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: INFO

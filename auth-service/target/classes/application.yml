@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: auth-service
+
+keycloak:
+  server-url: ${KEYCLOAK_URL:http://localhost:8080}
+  realm: medinsight-realm
+  resource: medinsight-backend-client
+  admin-client-id: admin-cli
+  admin-username: ${KEYCLOAK_ADMIN:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+
+logging:
+  level:
+    com.medinsight.auth: DEBUG
