@@ -33,7 +33,8 @@ public class KeycloakConfig {
                 .clientId(clientId)
                 .username(username)
                 .password(password)
-                .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build())
+                .resteasyClient(
+                        ((ResteasyClientBuilder) ResteasyClientBuilder.newBuilder()).connectionPoolSize(10).build())
                 .build();
     }
 }

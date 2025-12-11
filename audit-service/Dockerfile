@@ -1,0 +1,18 @@
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn install -N -DskipTests
+
+COPY commons-library commons-library
+WORKDIR /app/commons-library
+RUN mvn clean install -DskipTests
+
+WORKDIR /app
+COPY audit-service audit-service
+WORKDIR /app/audit-service
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/audit-service/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
