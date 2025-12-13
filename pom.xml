@@ -38,6 +38,15 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Force Spring Security Update for CVE Fixes -->
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-bom</artifactId>
+                <version>6.5.4</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Spring Cloud -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
