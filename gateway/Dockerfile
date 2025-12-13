@@ -14,5 +14,7 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+# Upgrade OS packages to fix vulnerabilities (libpng, etc.)
+RUN apk update && apk upgrade
 COPY --from=build /app/gateway/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
