@@ -56,6 +56,15 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- Force Netty Update for CVE-2025-55163 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.1.124.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Spring Cloud -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
