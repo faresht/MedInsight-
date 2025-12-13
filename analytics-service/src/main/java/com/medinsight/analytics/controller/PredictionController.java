@@ -1,41 +1,32 @@
 package com.medinsight.analytics.controller;
 
 import com.medinsight.analytics.service.PredictionService;
-import com.medinsight.common.dto.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/analytics")
+@RequiredArgsConstructor
 public class PredictionController {
 
     private final PredictionService predictionService;
 
-    public PredictionController(PredictionService predictionService) {
-        this.predictionService = predictionService;
-    }
-
     @PostMapping("/predict/relapse-risk")
-    @PreAuthorize("hasRole('doctor')")
-    public ResponseEntity<ApiResponse<String>> predictRelapseRisk(@RequestBody Map<String, String> request) {
-        String result = predictionService.predictRelapseRisk(request.get("history"));
-        return ResponseEntity.ok(ApiResponse.success(result));
+    public ResponseEntity<String> predictRelapseRisk(@RequestBody String patientHistory) {
+        String prediction = predictionService.predictRelapseRisk(patientHistory);
+        return ResponseEntity.ok(prediction);
     }
 
     @PostMapping("/predict/bed-occupancy")
-    @PreAuthorize("hasRole('manager')")
-    public ResponseEntity<ApiResponse<String>> predictBedOccupancy(@RequestBody Map<String, String> request) {
-        String result = predictionService.predictBedOccupancy(request.get("data"));
-        return ResponseEntity.ok(ApiResponse.success(result));
+    public ResponseEntity<String> predictBedOccupancy(@RequestBody String data) {
+        String prediction = predictionService.predictBedOccupancy(data);
+        return ResponseEntity.ok(prediction);
     }
-    
-    @PostMapping("/detect-anomalies")
-    @PreAuthorize("hasRole('admin') or hasRole('sec-officer')")
-    public ResponseEntity<ApiResponse<String>> detectAnomalies(@RequestBody Map<String, String> request) {
-        String result = predictionService.detectAnomalies(request.get("logs"));
-        return ResponseEntity.ok(ApiResponse.success(result));
+
+    @PostMapping("/detect/anomalies")
+    public ResponseEntity<String> detectAnomalies(@RequestBody String logData) {
+        String analysis = predictionService.detectAnomalies(logData);
+        return ResponseEntity.ok(analysis);
     }
 }

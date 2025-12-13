@@ -1,0 +1,475 @@
+@startuml MedInsight_Class_Diagram
+
+!define PATIENT_COLOR #E8F5E9
+!define DOCTOR_COLOR #E3F2FD
+!define AUTH_COLOR #FFF3E0
+!define ANALYTICS_COLOR #F3E5F5
+!define REPORT_COLOR #FCE4EC
+!define NOTIFICATION_COLOR #E0F2F1
+!define AUDIT_COLOR #FFF9C4
+
+' ============ PATIENT SERVICE ============
+package "Patient Service" PATIENT_COLOR {
+    
+    enum Gender {
+        MALE
+        FEMALE
+        OTHER
+    }
+    
+    enum AddressType {
+        HOME
+        WORK
+        BILLING
+    }
+    
+    enum HistoryType {
+        DISEASE
+        SURGERY
+        ALLERGY
+        FAMILY_HISTORY
+        MEDICATION
+    }
+    
+    enum HistoryStatus {
+        ACTIVE
+        RESOLVED
+        CHRONIC
+        INACTIVE
+    }
+    
+    enum DocumentType {
+        LAB_RESULT
+        PRESCRIPTION
+        IMAGING
+        REPORT
+        CONSENT_FORM
+    }
+    
+    class Patient {
+        - id: Long
+        - userId: UUID
+        - medicalRecordNumber: String
+        - firstName: String
+        - lastName: String
+        - email: String
+        - phoneNumber: String
+        - dateOfBirth: LocalDate
+        - gender: Gender
+        - bloodType: String
+        - medicalHistorySummary: String
+        - portalActive: boolean
+        - createdAt: LocalDateTime
+        - updatedAt: LocalDateTime
+    }
+    
+    class Address {
+        - id: Long
+        - patientId: Long
+        - street: String
+        - city: String
+        - state: String
+        - zipCode: String
+        - country: String
+        - type: AddressType
+    }
+    
+    class MedicalRecord {
+        - id: Long
+        - patientId: Long
+        - bloodGroup: String
+        - allergies: String
+        - chronicConditions: String
+        - currentMedications: String
+        - generalNotes: String
+        - visibleInPortal: boolean
+        - createdAt: LocalDateTime
+        - updatedAt: LocalDateTime
+    }
+    
+    class MedicalHistory {
+        - id: Long
+        - patientId: Long
+        - type: HistoryType
+        - condition: String
+        - description: String
+        - startDate: LocalDate
+        - endDate: LocalDate
+        - status: HistoryStatus
+        - visibleInPortal: boolean
+    }
+    
+    class MedicalDocument {
+        - id: Long
+        - patientId: Long
+        - fileName: String
+        - fileUrl: String
+        - documentType: DocumentType
+        - fileSize: Long
+        - uploadDate: LocalDateTime
+        - visibleInPortal: boolean
+    }
+    
+    Patient "1" -- "*" Address : has
+    Patient "1" -- "1" MedicalRecord : has
+    Patient "1" -- "*" MedicalHistory : has
+    Patient "1" -- "*" MedicalDocument : has
+    Patient -- Gender
+    Address -- AddressType
+    MedicalHistory -- HistoryType
+    MedicalHistory -- HistoryStatus
+    MedicalDocument -- DocumentType
+}
+
+' ============ DOCTOR SERVICE ============
+package "Doctor Service" DOCTOR_COLOR {
+    
+    enum AppointmentType {
+        CONSULTATION
+        FOLLOW_UP
+        EMERGENCY
+        ROUTINE_CHECKUP
+        TELEMEDICINE
+    }
+    
+    enum AppointmentStatus {
+        SCHEDULED
+        CONFIRMED
+        IN_PROGRESS
+        COMPLETED
+        CANCELLED
+        NO_SHOW
+    }
+    
+    class Doctor {
+        - id: Long
+        - userId: UUID
+        - firstName: String
+        - lastName: String
+        - email: String
+        - phoneNumber: String
+        - licenseNumber: String
+        - specialization: String
+        - qualification: String
+        - experienceYears: Integer
+        - photoUrl: String
+        - active: boolean
+        - createdAt: LocalDateTime
+        - updatedAt: LocalDateTime
+    }
+    
+    class Appointment {
+        - id: Long
+        - patientId: Long
+        - doctorId: Long
+        - appointmentDateTime: LocalDateTime
+        - durationMinutes: Integer
+        - type: AppointmentType
+        - status: AppointmentStatus
+        - reason: String
+        - notes: String
+        - createdAt: LocalDateTime
+        - updatedAt: LocalDateTime
+    }
+    
+    class Consultation {
+        - id: Long
+        - appointmentId: Long
+        - patientId: Long
+        - doctorId: Long
+        - consultationDate: LocalDateTime
+        - chiefComplaint: String
+        - diagnosis: String
+        - prescription: String
+        - notes: String
+        - followUpInstructions: String
+        - visibleInPortal: boolean
+        - createdAt: LocalDateTime
+    }
+    
+    class Schedule {
+        - id: Long
+        - doctorId: Long
+        - dayOfWeek: DayOfWeek
+        - startTime: LocalTime
+        - endTime: LocalTime
+        - available: boolean
+    }
+    
+    Doctor "1" -- "*" Appointment : has
+    Doctor "1" -- "*" Schedule : has
+    Appointment "1" -- "0..1" Consultation : has
+    Appointment -- AppointmentType
+    Appointment -- AppointmentStatus
+}
+
+' ============ AUTH SERVICE ============
+package "Auth Service" AUTH_COLOR {
+    
+    enum UserType {
+        PATIENT
+        DOCTOR
+        ADMIN
+        NURSE
+        RECEPTIONIST
+    }
+    
+    class User {
+        - id: UUID
+        - username: String
+        - email: String
+        - password: String
+        - firstName: String
+        - lastName: String
+        - phoneNumber: String
+        - userType: UserType
+        - enabled: boolean
+        - createdAt: LocalDateTime
+        - updatedAt: LocalDateTime
+        - lastLogin: LocalDateTime
+    }
+    
+    class Role {
+        - id: Long
+        - name: String
+        - description: String
+    }
+    
+    User "*" -- "*" Role : has
+    User -- UserType
+}
+
+' ============ ANALYTICS SERVICE ============
+package "Analytics Service" ANALYTICS_COLOR {
+    
+    enum AnalysisType {
+        RELAPSE_RISK
+        BED_OCCUPANCY
+        ANOMALY_DETECTION
+        DISEASE_PREDICTION
+    }
+    
+    enum RequestStatus {
+        PENDING
+        IN_PROGRESS
+        COMPLETED
+        FAILED
+    }
+    
+    enum ModelType {
+        CLASSIFICATION
+        REGRESSION
+        CLUSTERING
+        NLP
+        LLM
+    }
+    
+    class AnalysisRequest <<MongoDB>> {
+        - id: String
+        - patientId: Long
+        - analysisType: AnalysisType
+        - inputData: Map
+        - status: RequestStatus
+        - requestedAt: LocalDateTime
+        - completedAt: LocalDateTime
+        - errorMessage: String
+    }
+    
+    class Prediction <<MongoDB>> {
+        - id: String
+        - analysisRequestId: String
+        - patientId: Long
+        - confidenceScore: Double
+        - predictionLabel: String
+        - explanation: String
+        - metrics: Map
+        - createdAt: LocalDateTime
+    }
+    
+    class AIModel <<MongoDB>> {
+        - id: String
+        - name: String
+        - version: String
+        - modelType: ModelType
+        - framework: String
+        - trainedAt: LocalDateTime
+        - performanceMetrics: Map
+        - active: boolean
+    }
+    
+    AnalysisRequest "1" -- "*" Prediction : generates
+    AnalysisRequest -- AnalysisType
+    AnalysisRequest -- RequestStatus
+    AIModel -- ModelType
+}
+
+' ============ REPORT SERVICE ============
+package "Report Service" REPORT_COLOR {
+    
+    enum ReportType {
+        CONSULTATION_SUMMARY
+        LAB_REPORT
+        DISCHARGE_SUMMARY
+        PRESCRIPTION
+        MEDICAL_CERTIFICATE
+    }
+    
+    class MedicalReport {
+        - id: Long
+        - patientId: Long
+        - doctorId: Long
+        - reportType: ReportType
+        - title: String
+        - content: String
+        - pdfUrl: String
+        - generatedAt: LocalDateTime
+        - visibleInPortal: boolean
+    }
+    
+    class HospitalStatistics <<MongoDB>> {
+        - id: String
+        - reportDate: LocalDate
+        - totalPatients: Integer
+        - totalConsultations: Integer
+        - bedOccupancyRate: Double
+        - availableBeds: Integer
+        - departmentStats: Map
+        - generatedAt: LocalDateTime
+    }
+    
+    MedicalReport -- ReportType
+}
+
+' ============ NOTIFICATION SERVICE ============
+package "Notification Service" NOTIFICATION_COLOR {
+    
+    enum NotificationType {
+        APPOINTMENT_REMINDER
+        APPOINTMENT_CONFIRMATION
+        APPOINTMENT_CANCELLATION
+        LAB_RESULT_READY
+        PRESCRIPTION_READY
+        PAYMENT_DUE
+        SYSTEM_ALERT
+    }
+    
+    enum NotificationChannel {
+        EMAIL
+        SMS
+        PUSH
+        IN_APP
+    }
+    
+    enum NotificationStatus {
+        PENDING
+        SENT
+        DELIVERED
+        FAILED
+        CANCELLED
+    }
+    
+    class Notification {
+        - id: Long
+        - recipientUserId: UUID
+        - notificationType: NotificationType
+        - channel: NotificationChannel
+        - subject: String
+        - message: String
+        - status: NotificationStatus
+        - scheduledAt: LocalDateTime
+        - sentAt: LocalDateTime
+        - createdAt: LocalDateTime
+    }
+    
+    Notification -- NotificationType
+    Notification -- NotificationChannel
+    Notification -- NotificationStatus
+}
+
+' ============ AUDIT SERVICE ============
+package "Audit Service" AUDIT_COLOR {
+    
+    enum AuditAction {
+        CREATE
+        READ
+        UPDATE
+        DELETE
+        LOGIN
+        LOGOUT
+        EXPORT
+        PRINT
+    }
+    
+    enum AlertSeverity {
+        LOW
+        MEDIUM
+        HIGH
+        CRITICAL
+    }
+    
+    class AuditLog <<MongoDB>> {
+        - id: String
+        - userId: UUID
+        - username: String
+        - action: AuditAction
+        - entityType: String
+        - entityId: String
+        - ipAddress: String
+        - userAgent: String
+        - changes: Map
+        - timestamp: LocalDateTime
+    }
+    
+    class SecurityAlert <<MongoDB>> {
+        - id: String
+        - severity: AlertSeverity
+        - alertType: String
+        - description: String
+        - sourceIp: String
+        - userId: UUID
+        - resolved: boolean
+        - detectedAt: LocalDateTime
+        - resolvedAt: LocalDateTime
+    }
+    
+    AuditLog -- AuditAction
+    SecurityAlert -- AlertSeverity
+}
+
+' ============ RELATIONSHIPS ACROSS SERVICES ============
+Patient ..> User : userId
+Doctor ..> User : userId
+Appointment ..> Patient : patientId
+Appointment ..> Doctor : doctorId
+Consultation ..> Patient : patientId
+Consultation ..> Doctor : doctorId
+Consultation ..> Appointment : appointmentId
+MedicalReport ..> Patient : patientId
+MedicalReport ..> Doctor : doctorId
+AnalysisRequest ..> Patient : patientId
+Prediction ..> Patient : patientId
+Notification ..> User : recipientUserId
+AuditLog ..> User : userId
+SecurityAlert ..> User : userId
+
+note right of Patient
+  Main entity in Patient Service
+  Links to User via userId
+end note
+
+note right of Doctor
+  Main entity in Doctor Service
+  Links to User via userId
+end note
+
+note bottom of AnalysisRequest
+  MongoDB document for
+  AI/ML analysis requests
+end note
+
+note bottom of AuditLog
+  MongoDB document for
+  system audit trail
+end note
+
+@enduml

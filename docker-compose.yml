@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Databases
   postgres:
@@ -56,7 +54,7 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
-      - "8080:8080"
+      - "8180:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -214,6 +212,8 @@ services:
       context: .
       dockerfile: patient-service/Dockerfile
     container_name: medinsight-patient-service
+    ports:
+      - "8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_URL=jdbc:postgresql://postgres:5432/medinsight_db
@@ -228,6 +228,8 @@ services:
       context: .
       dockerfile: doctor-service/Dockerfile
     container_name: medinsight-doctor-service
+    ports:
+      - "8082:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_URL=jdbc:postgresql://postgres:5432/medinsight_db

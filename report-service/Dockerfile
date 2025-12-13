@@ -1,7 +1,7 @@
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY pom.xml .
-RUN mvn install -N -DskipTests
+RUN for i in 1 2 3; do mvn install -N -DskipTests --fail-at-end --batch-mode --errors --update-snapshots --no-transfer-progress && break || sleep 10; done
 
 COPY commons-library commons-library
 WORKDIR /app/commons-library

@@ -1,0 +1,221 @@
+# ============================================
+# MedInsight+ Project .gitignore
+# ============================================
+
+# ============ Java ============
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# ============ Maven ============
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ============ IDE - IntelliJ IDEA ============
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# ============ IDE - Eclipse ============
+.metadata
+.classpath
+.project
+.settings/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
+.recommenders
+.externalToolBuilders/
+*.launch
+*.pydevproject
+.cproject
+.factorypath
+.buildpath
+.target
+.tern-project
+.texlipse
+.springBeans
+.recommenders/
+.apt_generated/
+.apt_generated_test/
+
+# ============ IDE - VS Code ============
+.vscode/
+*.code-workspace
+.history/
+
+# ============ Operating System ============
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============ Spring Boot ============
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+.springBeans
+
+# ============ Logs ============
+*.log
+logs/
+*.log.*
+log/
+/logs
+*.gz
+
+# ============ Docker ============
+# Ignore Docker volumes data (but keep docker-compose.yml)
+volumes/
+data/
+
+# ============ Database ============
+*.db
+*.sqlite
+*.sqlite3
+*.h2.db
+*.trace.db
+
+# ============ Security & Credentials ============
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+*.truststore
+application-local.yml
+application-local.properties
+application-secret.yml
+application-secret.properties
+.env
+.env.local
+.env.*.local
+secrets/
+credentials/
+
+# ============ Node (if using frontend) ============
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+dist/
+.cache/
+
+# ============ Build Tools ============
+.gradle/
+gradlew
+gradlew.bat
+
+# ============ Test Coverage ============
+*.exec
+.sonar/
+coverage/
+jacoco.exec
+*.coverage
+
+# ============ Temporary Files ============
+*.tmp
+*.temp
+temp/
+tmp/
+
+# ============ Package Files ============
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ============ Backup Files ============
+*.bak
+*.backup
+*~
+
+# ============ Atlassian (Jira/Confluence) ============
+atlassian-ide-plugin.xml
+
+# ============ JRebel ============
+rebel.xml
+rebel-remote.xml
+
+# ============ SonarQube ============
+.sonar/
+
+# ============ Keep Important Files ============
+# Force include these important files even if they match patterns above
+!.mvn/wrapper/maven-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# ============ Custom Exclusions ============
+# Add any project-specific files to ignore here
+/uploads/
+/downloads/
+/scratch/
+*.old
