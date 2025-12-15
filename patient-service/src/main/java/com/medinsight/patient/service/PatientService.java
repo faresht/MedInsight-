@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,9 +17,34 @@ import java.util.UUID;
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final EventPublisher eventPublisher;
 
     public Patient createPatient(Patient patient) {
-        return patientRepository.save(patient);
+        Patient savedPatient = patientRepository.save(patient);
+
+        // Publish audit event
+        eventPublisher.publishAuditEvent(
+                savedPatient.getUserId(),
+                savedPatient.getEmail(),
+                "CREATE",
+                "Patient",
+                savedPatient.getId().toString(),
+                null, // ipAddress - should be passed from controller
+                null, // userAgent - should be passed from controller
+                Map.of("firstName", savedPatient.getFirstName(),
+                        "lastName", savedPatient.getLastName(),
+                        "email", savedPatient.getEmail()));
+
+        // Publish notification event
+        eventPublisher.publishNotificationEvent(
+                savedPatient.getUserId(),
+                "PATIENT_WELCOME",
+                "EMAIL",
+                "Welcome to MedInsight",
+                String.format("Dear %s %s, welcome to MedInsight E-Health System!",
+                        savedPatient.getFirstName(), savedPatient.getLastName()));
+
+        return savedPatient;
     }
 
     public Optional<Patient> getPatientById(Long id) {
@@ -51,11 +77,36 @@ public class PatientService {
         patient.setMedicalHistorySummary(patientDetails.getMedicalHistorySummary());
         patient.setPortalActive(patientDetails.isPortalActive());
 
-        return patientRepository.save(patient);
+        Patient updatedPatient = patientRepository.save(patient);
+
+        // Publish audit event
+        eventPublisher.publishAuditEvent(
+                updatedPatient.getUserId(),
+                updatedPatient.getEmail(),
+                "UPDATE",
+                "Patient",
+                updatedPatient.getId().toString(),
+                null,
+                null,
+                Map.of("updatedFields", "firstName, lastName, email, etc."));
+
+        return updatedPatient;
     }
 
     public void deletePatient(Long id) {
+        Optional<Patient> patientOpt = patientRepository.findById(id);
         patientRepository.deleteById(id);
+
+        // Publish audit event if patient existed
+        patientOpt.ifPresent(patient -> eventPublisher.publishAuditEvent(
+                patient.getUserId(),
+                patient.getEmail(),
+                "DELETE",
+                "Patient",
+                patient.getId().toString(),
+                null,
+                null,
+                Map.of("deletedPatient", patient.getEmail())));
     }
 
     public boolean existsByEmail(String email) {

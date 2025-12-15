@@ -37,5 +37,10 @@
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>2.3.0</version>
             </dependency>
+            <!-- Kafka for consuming notification events -->
+            <dependency>
+                <groupId>org.springframework.kafka</groupId>
+                <artifactId>spring-kafka</artifactId>
+            </dependency>
     </dependencies>
 </project>

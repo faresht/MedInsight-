@@ -1,14 +1,42 @@
+# Prometheus Configuration for Kafka Metrics
+
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
 
 scrape_configs:
+  # Existing services
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'medinsight-services'
+  # Spring Boot Actuator endpoints
+  - job_name: 'audit-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:8080'] # Gateway
-      # In a real docker network, we'd use service names, but for Spring Boot running on host or container, adjustment needed.
-      # Assuming services run in docker for full stack, we'd add 'gateway:8080', 'patient-service:8081', etc.
+      - targets: ['audit-service:8080']
+
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['notification-service:8080']
+
+  - job_name: 'patient-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['patient-service:8080']
+
+  - job_name: 'doctor-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['doctor-service:8080']
+
+  - job_name: 'report-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['report-service:8080']
+
+  # Kafka JMX Exporter (if configured)
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka:7071']
