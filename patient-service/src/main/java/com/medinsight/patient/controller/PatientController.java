@@ -1,7 +1,9 @@
 package com.medinsight.patient.controller;
 
+import com.medinsight.commons.util.RequestContext;
 import com.medinsight.patient.entity.Patient;
 import com.medinsight.patient.service.PatientService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +20,10 @@ public class PatientController {
     private final PatientService patientService;
 
     @PostMapping
-    public ResponseEntity<Patient> createPatient(@RequestBody Patient patient) {
-        Patient created = patientService.createPatient(patient);
+    public ResponseEntity<Patient> createPatient(@RequestBody Patient patient, HttpServletRequest request) {
+        String ipAddress = RequestContext.getClientIpAddress(request);
+        String userAgent = RequestContext.getUserAgent(request);
+        Patient created = patientService.createPatient(patient, ipAddress, userAgent);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -44,9 +48,12 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Patient> updatePatient(@PathVariable Long id, @RequestBody Patient patient) {
+    public ResponseEntity<Patient> updatePatient(@PathVariable Long id, @RequestBody Patient patient,
+            HttpServletRequest request) {
         try {
-            Patient updated = patientService.updatePatient(id, patient);
+            String ipAddress = RequestContext.getClientIpAddress(request);
+            String userAgent = RequestContext.getUserAgent(request);
+            Patient updated = patientService.updatePatient(id, patient, ipAddress, userAgent);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -54,8 +61,10 @@ public class PatientController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePatient(@PathVariable Long id) {
-        patientService.deletePatient(id);
+    public ResponseEntity<Void> deletePatient(@PathVariable Long id, HttpServletRequest request) {
+        String ipAddress = RequestContext.getClientIpAddress(request);
+        String userAgent = RequestContext.getUserAgent(request);
+        patientService.deletePatient(id, ipAddress, userAgent);
         return ResponseEntity.noContent().build();
     }
 

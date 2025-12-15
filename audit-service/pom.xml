@@ -24,5 +24,10 @@
             <groupId>com.medinsight</groupId>
             <artifactId>commons-library</artifactId>
         </dependency>
+        <!-- Kafka for consuming audit events -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
     </dependencies>
 </project>
