@@ -1,0 +1,135 @@
+name: MedInsight CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  # Define the list of services for the matrix strategy
+  SERVICES: '["gateway", "auth-service", "patient-service", "doctor-service", "report-service", "analytics-service", "audit-service", "notification-service"]'
+
+jobs:
+  # 1. Build & Test Java Microservices
+  build-and-test:
+    name: Build & Test (Java)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and Test with Maven
+        run: mvn clean install -B
+
+  # 2. OWASP Dependency Check (Security)
+  dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'MedInsight'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          
+      - name: Upload Test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Depcheck report
+          path: reports
+
+  # 3. Docker Build, Scan (Trivy) & Push
+  docker-build-push:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: build-and-test 
+    permissions:
+      contents: read
+      packages: write
+      security-events: write 
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [gateway, auth-service, patient-service, doctor-service, report-service, analytics-service, audit-service, notification-service]
+    steps:
+      - uses: actions/checkout@v3
+
+      # Login to Docker Hub (Required for pushing)
+      # If secrets are not set, this step will fail or skip depending on implementation. 
+      # Ideally user sets these secrets.
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }} -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest -f ${{ matrix.service }}/Dockerfile .
+
+      # Trivy Scan on the built image
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
+
+  # 4. AI Service Build & Push (Separate job as it is Python)
+  ai-service-build:
+    name: AI Service Build & Push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
+        run: |
+           docker build -t ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }} -t ${{ secrets.DOCKER_USERNAME }}/ai-service:latest -f ai-service/Dockerfile .
+
+      # Trivy Scan for AI Service
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/ai-service:latest
