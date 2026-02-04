@@ -24,7 +24,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE patients SET deleted = true WHERE id=?")
 @Where(clause = "deleted=false")
-@EntityListeners(AuditingEntityListener.class)
+@EntityListeners({ AuditingEntityListener.class, com.medinsight.patient.listener.DataIntegrityListener.class })
 public class Patient {
 
     @Id
@@ -62,6 +62,9 @@ public class Patient {
 
     @Column(nullable = false)
     private boolean portalActive = false;
+
+    // Hash for Data Integrity Verification
+    private String dataHash;
 
     @Column(nullable = false)
     private boolean deleted = Boolean.FALSE;

@@ -55,6 +55,8 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8180:8080"
+    volumes:
+      - ./themes/medinsight:/opt/keycloak/themes/medinsight
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,6 +82,27 @@ services:
     #           count: 1
     #           capabilities: [gpu]
 
+    # AI Service for Breast Cancer Diagnosis
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: medinsight-ai-service
+    ports:
+      - "8088:8000"
+    environment:
+      - MODEL_PATH=/app/data/models
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./ai-service/data:/app/data
+    networks:
+      - medinsight-net
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     # Event Bus
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -262,9 +285,11 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - MONGODB_URI=mongodb://admin:password@mongodb:27017/medinsight_analytics?authSource=admin
       - OLLAMA_BASE_URL=http://ollama:11434
+      - AI_SERVICE_URL=http://ai-service:8000
     depends_on:
       - mongodb
       - ollama
+      - ai-service
       - keycloak
     networks:
       - medinsight-net

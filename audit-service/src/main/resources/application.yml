@@ -1,14 +1,36 @@
-server:
-  port: 8080
 spring:
   application:
     name: audit-service
+  
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/medinsight_audit}
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm
-          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm/protocol/openid-connect/certs
+      uri: mongodb://localhost:27017/medinsight_audit
+      auto-index-creation: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: audit-service-group
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+
+server:
+  port: 8086
+  servlet:
+    context-path: /
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.medinsight: DEBUG

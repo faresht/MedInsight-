@@ -1,11 +1,46 @@
-server:
-  port: 8080
 spring:
   application:
     name: notification-service
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm
-          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/medinsight-realm/protocol/openid-connect/certs
+  
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/medinsight_notification
+      auto-index-creation: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service-group
+      auto-offset-reset: earliest
+
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: user
+    password: password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8087
+  servlet:
+    context-path: /
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.medinsight: DEBUG
