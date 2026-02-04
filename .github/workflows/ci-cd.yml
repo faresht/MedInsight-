@@ -66,26 +66,31 @@ jobs:
       matrix:
         service: [gateway, auth-service, patient-service, doctor-service, report-service, analytics-service, audit-service, notification-service]
     steps:
-      - uses: actions/checkout@v4
-
-      # Login to Docker Hub (Required for pushing)
-      # If secrets are not set, this step will fail or skip depending on implementation. 
-      # Ideally user sets these secrets.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
       - name: Log in to Docker Hub
-        # Only run if not a PR AND if secrets are available (implicit check by login action, but avoids failure if we skip)
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+          
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.service }}/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }},${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
 
-      - name: Build Docker Image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }} -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest -f ${{ matrix.service }}/Dockerfile .
-
-      # Trivy Scan on the built image
+      # Trivy Scan on the built image (We need to load it first if we want to scan it, but scan happens on registry image with cache usually)
+      # For Trivy scan we scan the image we just pushed OR we load it. 
+      # Simpler approach: Scan the remote image after push (if we pushed) OR load it locally.
+      # Since we push, we can scan the registry image.
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
+        if: github.event_name != 'pull_request'
         with:
           image-ref: '${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }}'
           format: 'table'
@@ -94,18 +99,15 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
-      - name: Push Docker Image
-        if: github.event_name != 'pull_request'
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
-
   # 4. AI Service Build & Push (Separate job as it is Python)
   ai-service-build:
     name: AI Service Build & Push
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
         if: github.event_name != 'pull_request'
@@ -114,13 +116,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker Image
-        run: |
-           docker build -t ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }} -t ${{ secrets.DOCKER_USERNAME }}/ai-service:latest -f ai-service/Dockerfile .
+      - name: Build and Push AI Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ai-service/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }},${{ secrets.DOCKER_USERNAME }}/ai-service:latest
 
       # Trivy Scan for AI Service
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
+        if: github.event_name != 'pull_request'
         with:
           image-ref: '${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }}'
           format: 'table'
@@ -128,9 +135,3 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-
-      - name: Push Docker Image
-        if: github.event_name != 'pull_request'
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/ai-service:latest
