@@ -28,5 +28,5 @@ SimpleITK==2.4.0
 setuptools==80.10.2 # Latest stable to fix vendored vulnerabilities
 jaraco.context==6.1.0
 wheel==0.46.2
-protobuf==6.33.5 # Upgrading to 6.x to fix CVE-2026-0994. Warning: Might break TF, checking build.
+protobuf==5.29.5 # Stuck on 5.x due to tensorflow-cpu constraint <6.0.0
 starlette==0.49.1 # Use the secure version!
