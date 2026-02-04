@@ -93,6 +93,20 @@
                 <version>1.8.1</version>
             </dependency>
 
+            <!-- Force lz4-java (at.yawk) Update for CVE-2025-66566 -->
+            <dependency>
+                <groupId>at.yawk.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>1.10.1</version>
+            </dependency>
+
+            <!-- Force Protobuf Update for CVE-2024-7254 -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>3.25.5</version>
+            </dependency>
+
             <!-- Spring Cloud -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
