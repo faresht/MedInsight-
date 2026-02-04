@@ -1,0 +1,93 @@
+
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use '@angular/material' as mat;
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file in your application.
+@include mat.core();
+
+// Define the palettes for your theme using the Material 2 (M2) system since m3 is newer
+$medinsight-primary: mat.define-palette(mat.$teal-palette, 700);
+$medinsight-accent: mat.define-palette(mat.$deep-orange-palette, A200, A100, A400);
+$medinsight-warn: mat.define-palette(mat.$red-palette);
+
+// Create the theme object
+$medinsight-theme: mat.define-light-theme((
+  color: (
+    primary: $medinsight-primary,
+    accent: $medinsight-accent,
+    warn: $medinsight-warn,
+  )
+));
+
+// Include theme styles for core and each component used in your app.
+@include mat.all-component-themes($medinsight-theme);
+
+// Custom Global Styles
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f7fa;
+}
+
+// Typography Enhancements
+h1, h2, h3, h4, h5, h6 {
+  color: #263238;
+  font-weight: 500;
+}
+
+// Utility Classes
+.spacer {
+  flex: 1 1 auto;
+}
+
+.container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card-dashboard {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.gap-4 {
+  gap: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.success-text {
+  color: #2e7d32;
+}
+
+.error-text {
+  color: #c62828;
+}
