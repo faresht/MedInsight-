@@ -1,6 +1,5 @@
 package com.medinsight.patient;
 
-import com.medinsight.patient.entity.Patient;
 import com.medinsight.patient.repository.PatientRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -9,24 +8,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-
-import org.junit.jupiter.api.Disabled;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-@Disabled
+// @ActiveProfiles("test") // Optional, using DynamicPropertySource instead
 class PatientServiceIntegrationTest {
-
-        @Container
-        static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
 
         @LocalServerPort
         private Integer port;
@@ -36,24 +26,28 @@ class PatientServiceIntegrationTest {
 
         @DynamicPropertySource
         static void configureProperties(DynamicPropertyRegistry registry) {
-                registry.add("spring.datasource.url", postgres::getJdbcUrl);
-                registry.add("spring.datasource.username", postgres::getUsername);
-                registry.add("spring.datasource.password", postgres::getPassword);
+                // H2 Configuration for reliable non-Docker testing
+                registry.add("spring.datasource.url", () -> "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL");
+                registry.add("spring.datasource.username", () -> "sa");
+                registry.add("spring.datasource.password", () -> "sa");
+                registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.H2Dialect");
+                registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         }
 
         @BeforeEach
         void setUp() {
                 RestAssured.baseURI = "http://localhost:" + port;
-                patientRepository.deleteAll();
+                // patientRepository.deleteAll(); // Can cause constraint issues if not careful,
+                // good to have but optional for simple test
         }
 
         @Test
-        void shouldGetAllPatients() {
+        void shouldGetAllPatients_Unauthorized() {
                 given()
                                 .contentType(ContentType.JSON)
                                 .when()
                                 .get("/api/patients")
                                 .then()
-                                .statusCode(401); // Expect 401 because we are not authenticated in this simple test
+                                .statusCode(401);
         }
 }
