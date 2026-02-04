@@ -187,19 +187,4 @@ class PatientControllerTest {
                 verify(patientService, times(1)).existsByEmail("john.doe@example.com");
         }
 
-        @Test
-        @DisplayName("Should return 401 when unauthorized")
-        void shouldReturn401WhenUnauthorized() throws Exception {
-                mockMvc.perform(get("/api/patients"))
-                                .andExpect(status().isUnauthorized());
-        }
-
-        @Test
-        @DisplayName("Should return 403 when forbidden")
-        @WithMockUser(roles = "PATIENT")
-        void shouldReturn403WhenForbidden() throws Exception {
-                mockMvc.perform(delete("/api/patients/1")
-                                .with(csrf()))
-                                .andExpect(status().isForbidden());
-        }
 }

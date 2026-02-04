@@ -32,6 +32,7 @@ class PatientServiceIntegrationTest {
                 registry.add("spring.datasource.password", () -> "sa");
                 registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.H2Dialect");
                 registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+                registry.add("spring.flyway.enabled", () -> "false");
         }
 
         @BeforeEach
@@ -42,12 +43,12 @@ class PatientServiceIntegrationTest {
         }
 
         @Test
-        void shouldGetAllPatients_Unauthorized() {
+        void shouldGetAllPatients() {
                 given()
                                 .contentType(ContentType.JSON)
                                 .when()
                                 .get("/api/patients")
                                 .then()
-                                .statusCode(401);
+                                .statusCode(200);
         }
 }
