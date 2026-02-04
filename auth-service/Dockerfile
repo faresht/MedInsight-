@@ -13,6 +13,7 @@ WORKDIR /app/auth-service
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
+RUN apk update && apk upgrade
 WORKDIR /app
 COPY --from=build /app/auth-service/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

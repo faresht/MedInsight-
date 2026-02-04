@@ -13,6 +13,7 @@ WORKDIR /app/notification-service
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
+RUN apk update && apk upgrade
 WORKDIR /app
 COPY --from=build /app/notification-service/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
