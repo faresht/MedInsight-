@@ -86,18 +86,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           
-      - name: Build and Push Docker Image
+      - name: Build and Load Docker Image (for Scanning)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ${{ matrix.service }}/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }},${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
+          load: true
+          push: false
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }}
 
-      # Trivy Scan on the built image (We need to load it first if we want to scan it, but scan happens on registry image with cache usually)
-      # For Trivy scan we scan the image we just pushed OR we load it. 
-      # Simpler approach: Scan the remote image after push (if we pushed) OR load it locally.
-      # Since we push, we can scan the registry image.
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         if: github.event_name != 'pull_request'
@@ -108,6 +105,13 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }}
+          docker tag ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
 
   # 4. AI Service Build & Push (Separate job as it is Python)
   ai-service-build:
@@ -134,15 +138,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push AI Service
+      - name: Build and Load AI Service (for Scanning)
         uses: docker/build-push-action@v5
         with:
           context: ./ai-service
           file: ./ai-service/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }},${{ secrets.DOCKER_USERNAME }}/ai-service:latest
+          load: true
+          push: false
+          tags: ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }}
 
-      # Trivy Scan for AI Service
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         if: github.event_name != 'pull_request'
@@ -153,3 +157,10 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+
+      - name: Push AI Service Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }}
+          docker tag ${{ secrets.DOCKER_USERNAME }}/ai-service:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/ai-service:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/ai-service:latest
