@@ -1,4 +1,4 @@
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+FROM public.ecr.aws/docker/library/maven:3.9.6-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 RUN mvn install -N -DskipTests --fail-at-end --batch-mode --errors --update-snapshots --no-transfer-progress
@@ -12,7 +12,7 @@ COPY auth-service auth-service
 WORKDIR /app/auth-service
 RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM public.ecr.aws/docker/library/eclipse-temurin:21-jre-alpine
 RUN apk update && apk upgrade
 WORKDIR /app
 COPY --from=build /app/auth-service/target/*.jar app.jar
