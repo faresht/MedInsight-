@@ -1,6 +1,9 @@
 package com.medinsight.doctor.controller;
 
+import com.medinsight.common.security.SecurityGlobalConfig;
 import com.medinsight.doctor.config.TestSecurityConfig;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medinsight.doctor.entity.Consultation;
@@ -25,7 +28,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ConsultationController.class)
+@WebMvcTest(controllers = ConsultationController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityGlobalConfig.class))
 @org.springframework.context.annotation.Import(TestSecurityConfig.class)
 @DisplayName("Consultation Controller Tests")
 class ConsultationControllerTest {
