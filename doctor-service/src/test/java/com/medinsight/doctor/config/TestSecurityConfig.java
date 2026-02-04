@@ -12,4 +12,9 @@ public class TestSecurityConfig {
     public JwtDecoder jwtDecoder() {
         return mock(JwtDecoder.class);
     }
+
+    @Bean
+    public com.medinsight.common.security.JwtAuthConverter jwtAuthConverter() {
+        return mock(com.medinsight.common.security.JwtAuthConverter.class);
+    }
 }
