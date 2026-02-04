@@ -33,6 +33,7 @@ class PatientServiceIntegrationTest {
                 registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.H2Dialect");
                 registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
                 registry.add("spring.flyway.enabled", () -> "false");
+                registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
         }
 
         @BeforeEach
