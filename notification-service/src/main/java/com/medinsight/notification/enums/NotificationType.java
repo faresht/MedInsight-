@@ -1,10 +1,11 @@
 package com.medinsight.notification.enums;
 
 public enum NotificationType {
+    EMAIL,
     APPOINTMENT_REMINDER,
     APPOINTMENT_CONFIRMATION,
     LAB_RESULT_READY,
     PRESCRIPTION_READY,
-    SYSTEM_ALERT,
-    PAYMENT_DUE
+    PAYMENT_DUE,
+    SYSTEM_ALERT
 }

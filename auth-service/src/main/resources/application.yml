@@ -28,18 +28,25 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/medinsight
-          jwk-set-uri: http://localhost:8180/realms/medinsight/protocol/openid-connect/certs
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8180}/realms/medinsight-realm
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8180}/realms/medinsight-realm/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
             provider: keycloak
-            client-id: medinsight-backend-client
+            client-id: medinsight-backend
             client-secret: ${KEYCLOAK_CLIENT_SECRET}
             authorization-grant-type: client_credentials
         provider:
           keycloak:
-            issuer-uri: http://localhost:8180/realms/medinsight
+            issuer-uri: ${KEYCLOAK_URL:http://localhost:8180}/realms/medinsight-realm
+
+keycloak:
+  server-url: ${KEYCLOAK_URL:http://localhost:8180}
+  realm: medinsight-realm
+  admin-client-id: admin-cli
+  admin-username: ${KEYCLOAK_ADMIN:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
 
 server:
   port: 8083 # Auth service
@@ -60,3 +67,4 @@ logging:
   level:
     root: INFO
     com.medinsight: DEBUG
+    org.springframework.web: DEBUG

@@ -2,9 +2,15 @@ spring:
   application:
     name: notification-service
   
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
+  
   data:
     mongodb:
-      uri: mongodb://localhost:27017/medinsight_notification
+      uri: ${MONGODB_URI:mongodb://admin:password@mongodb:27017/medinsight_notification?authSource=admin}
       auto-index-creation: true
 
   kafka:
@@ -14,19 +20,23 @@ spring:
       auto-offset-reset: earliest
 
   mail:
-    host: smtp.example.com
+    host: smtp.gmail.com
     port: 587
-    username: user
-    password: password
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 server:
-  port: 8087
+  port: 8080
   servlet:
     context-path: /
 

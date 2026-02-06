@@ -28,5 +28,7 @@ public class Role {
 
     @ManyToMany(mappedBy = "roles")
     @Builder.Default
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Set<User> users = new HashSet<>();
 }

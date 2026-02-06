@@ -24,13 +24,13 @@ public class NotificationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Notification> getNotificationById(@PathVariable Long id) {
+    public ResponseEntity<Notification> getNotificationById(@PathVariable String id) {
         Notification notification = notificationService.getNotificationById(id);
         return ResponseEntity.ok(notification);
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Notification>> getNotificationsByUserId(@PathVariable UUID userId) {
+    public ResponseEntity<List<Notification>> getNotificationsByUserId(@PathVariable String userId) {
         List<Notification> notifications = notificationService.getNotificationsByUserId(userId);
         return ResponseEntity.ok(notifications);
     }
@@ -42,19 +42,19 @@ public class NotificationController {
     }
 
     @PutMapping("/{id}/sent")
-    public ResponseEntity<Notification> markAsSent(@PathVariable Long id) {
+    public ResponseEntity<Notification> markAsSent(@PathVariable String id) {
         Notification notification = notificationService.markAsSent(id);
         return ResponseEntity.ok(notification);
     }
 
     @PutMapping("/{id}/delivered")
-    public ResponseEntity<Notification> markAsDelivered(@PathVariable Long id) {
+    public ResponseEntity<Notification> markAsDelivered(@PathVariable String id) {
         Notification notification = notificationService.markAsDelivered(id);
         return ResponseEntity.ok(notification);
     }
 
     @PutMapping("/{id}/failed")
-    public ResponseEntity<Notification> markAsFailed(@PathVariable Long id) {
+    public ResponseEntity<Notification> markAsFailed(@PathVariable String id) {
         Notification notification = notificationService.markAsFailed(id);
         return ResponseEntity.ok(notification);
     }
